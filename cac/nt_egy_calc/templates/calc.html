@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Calculator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #121212;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #ffffff;
+        }
+        .container {
+            display: flex;
+            height: 100vh; /* Use full height of viewport */
+            padding: 20px;
+        }
+        .calculator {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+            flex: 1; /* Allow it to grow and fill the space */
+            overflow: auto; /* Enable scrolling if content exceeds viewport height */
+        }
+        .comparison {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+            width: 40%; /* Fixed width for the response area */
+            margin-left: 20px; /* Space between calculator and response area */
+            overflow: auto; /* Enable scrolling if content exceeds height */
+        }
+        h1, h2, h3 {
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+        label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: block;
+            color: #ffffff;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #ffffff;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.1);
+        }
+        .button {
+            background-color: #00cc00;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: #009900;
+        }
+        .result-bar {
+            background-color: #1abc9c;
+            width: 100%;
+            height: 30px;
+            border-radius: 5px;
+            margin-top: 10px;
+            line-height: 30px;
+            text-align: center;
+            color: black;
+            font-weight: bold;
+        }
+        .steps-list {
+            margin-top: 10px;
+            list-style: none;
+            padding-left: 0;
+        }
+        .steps-list li {
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+        .actions {
+            margin-top: 20px;
+        }
+        .actions button,
+        .actions a {
+            margin-right: 10px;
+            margin-bottom: 10px;
+            background-color: #008CBA;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            text-align: center;
+        }
+        .actions button:hover,
+        .actions a:hover {
+            background-color: #006f9a;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="{% url 'home' %}">Home</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'calculator' %}" style="color:#36AE7C;">Calculate</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'trends' %}" style="color:#36AE7C;">Impact</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'chat' %}" style="color:#36AE7C;">Reduce</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="calculator">
+            <h1>Calculate Your Carbon Footprint</h1>
+            <form method="POST">
+                {% csrf_token %}
+                <label for="square_footage">Enter your home’s square footage:</label>
+                <input type="text" id="square_footage" name="square_footage" placeholder="e.g., 1500">
+
+                <label for="electricity_usage">Annual electricity usage (in KWH):</label>
+                <p>Find this on your energy bill.</p>
+                <input type="text" id="electricity_usage" name="electricity_usage" placeholder="e.g., 5000">
+
+                <label for="gas_usage">Annual gas usage (in cubic feet):</label>
+                <p>Check your gas bill for this information.</p>
+                <input type="text" id="gas_usage" name="gas_usage" placeholder="e.g., 10000">
+
+                <label for="miles_driven">Annual miles driven:</label>
+                <input type="text" id="miles_driven" name="miles_driven" placeholder="e.g., 12000">
+
+                <button type="submit" class="button">Calculate</button>
+            </form>
+
+            {% if net_co2 %}
+                <h2>Your Annual Carbon Footprint:</h2>
+                <div class="result-bar">{{ net_co2 }} lbs of CO2</div>
+                <h2>Average CO2 Emissions: {{ avg_co2 }} lbs</h2>
+            {% endif %}
+
+            <div class="actions">
+                <form action="{% url 'delete_data' %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="button">Delete Previous Data</button>
+                </form>
+
+                <form action="{% url 'recalculate' %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="button">Recalculate Data</button>
+                </form>
+
+                <a href="{% url 'home' %}" class="button">Back to Home</a>
+            </div>
+        </div>
+
+        <div class="comparison">
+            <h3>How Do You Compare?</h3>
+            <p>Check out how your carbon footprint stacks up against others in your area.</p>
+            {% if net_co2 %}
+                <h2>Your CO2 Emissions: {{ net_co2 }} lbs</h2>
+                <h2>Average CO2 Emissions: {{ avg_co2 }} lbs</h2>
+
+                <h3>Comparison:</h3>
+                {% if net_co2 < avg_co2 %}
+                    <p>You're doing great! Your footprint is below average.</p>
+                {% else %}
+                    <p>Consider making some changes. Your footprint is above average.</p>
+                {% endif %}
+            {% endif %}
+
+            <h3>Steps to Reduce Your Carbon Footprint:</h3>
+            <ul class="steps-list">
+                <li>1. Use public transportation or switch to an electric vehicle.</li>
+                <li>2. Unplug devices when they’re not in use.</li>
+                <li>3. Upgrade to energy-efficient lighting.</li>
+                <li>4. Use fans instead of air conditioning when possible.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849E1z5n1PC82N6XEjGq0LY3L+8yL+0R1mL5GSKO9Yb1d2iK5j6jzLvCGo4" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.0/dist/umd/popper.min.js" integrity="sha384-Fo5mT09c0EeMPRZjW7X2v3kSeQ6zB3z7t8b5s6lFSlC

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background-color: #333333;
+        }
+        .navbar-brand, .nav-link {
+            color: #ffffff !important;
+        }
+        .navbar-brand:hover, .nav-link:hover {
+            color: #cccccc !important;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding-top: 20px;
+        }
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .section {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+        }
+        .section h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .section ul li {
+            padding: 10px;
+            background-color: #444444;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .section ul li:hover {
+            background-color: #555555;
+        }
+        .chat-box {
+            background-color: #2a2a2a;
+            overflow-y: scroll;
+            height: 800px;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+            white-space: pre-wrap;
+            resize: none; /* Remove this if you want the user to resize the textarea */
+    
+        }
+        .prompt-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .prompt-box textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 4px;
+            resize: none; /* Prevent resizing */
+            overflow-y: auto; /* Scroll if content exceeds height */
+        }
+        .prompt-box button {
+            padding: 10px 20px;
+            background-color: #d60000;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .prompt-box button:hover {
+            background-color: #b80000;
+        }
+        .logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            width: 80px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="{% url 'home' %}">Home</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'calculator' %}" style="color:#36AE7C !important;">Calculate</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'trends' %}" style="color:#36AE7C !important;">Impact</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'chat' %}" style="color:#36AE7C !important;">Reduce</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <!-- Left panel for suggestions and recent questions -->
+        <div class="right-panel">
+            <div class="section">
+                <h2>Suggestions:</h2>
+                <ul>
+                    <li onclick="setQuestion('What are the biggest contributors to global warming, and how can they be mitigated?')">1. What are the biggest contributors to global warming, and how can they be mitigated?</li>
+                    <li onclick="setQuestion('How does climate change specifically impact agriculture and food security?')">2. How does climate change specifically impact agriculture and food security?</li>
+                    <li onclick="setQuestion('What are the most promising innovations in renewable energy that could help reduce climate change?')">3. What are the most promising innovations in renewable energy that could help reduce climate change?</li>
+                    <li onclick="setQuestion('How is climate change affecting sea levels, and what does that mean for coastal communities?')">4. How is climate change affecting sea levels, and what does that mean for coastal communities?</li>
+                    <li onclick="setQuestion('What role does deforestation play in climate change, and what are some strategies to combat it?')">5. What role does deforestation play in climate change, and what are some strategies to combat it?</li>
+                </ul>
+            </div>
+            <br>
+            <br>
+            <div class="section">
+                <h2>Most Recently Asked Questions</h2>
+                <ul class="recent-questions">
+                    {% for input in recent_inputs %}
+                        <li data-response="{{ input.response }}">{{ input.question }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right panel for ChatGPT response and prompt -->
+        <div class="right-panel">
+            <div class="chat-box" id="response-container">
+                <!-- The response from ChatGPT will appear here -->
+            </div>
+            <div class="prompt-box">
+                <form class="question-form" id="chat-form" method="POST">
+                    {% csrf_token %}
+                    <textarea id="question" name="question" required placeholder="Ask your question..."></textarea>
+                    <button type="submit">Ask ChatGPT</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setQuestion(question) {
+            document.getElementById('question').value = question;
+        }
+
+        document.getElementById('chat-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const question = document.getElementById('question').value;
+            const responseContainer = document.getElementById('response-container');
+    
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: new URLSearchParams({
+                    'question': question
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    responseContainer.innerHTML = `<p>Error: ${data.error}</p>`;
+                } else {
+                    responseContainer.innerHTML = `
+                        <h2>Your Question:</h2>
+                        <p>${data.question}</p>
+                        <h2>ChatGPT's Response:</h2>
+                        <p>${data.response}</p>
+                    `;
+                    document.getElementById('question').value = '';
+
+                    const recentQuestionsList = document.querySelector('.recent-questions');
+                    const newQuestionItem = document.createElement('li');
+                    newQuestionItem.setAttribute('data-response', data.response);
+                    newQuestionItem.textContent = data.question;
+
+                    newQuestionItem.addEventListener('click', function() {
+                        responseContainer.innerHTML = `
+                            <h2>Previous Question:</h2>
+                            <p>${this.innerText}</p>
+                            <h2>ChatGPT's Response:</h2>
+                            <p>${this.getAttribute('data-response')}</p>
+                        `;
+                    });
+
+                    recentQuestionsList.insertBefore(newQuestionItem, recentQuestionsList.firstChild);
+
+                    if (recentQuestionsList.children.length > 5) {
+                        recentQuestionsList.removeChild(recentQuestionsList.lastChild);
+                    }
+                }
+            })
+            .catch(err => {
+                responseContainer.innerHTML = `<p>Error: ${err.message}</p>`;
+            });
+        });
+
+        document.querySelectorAll('.recent-questions li').forEach(function(item) {
+            item.addEventListener('click', function() {
+                const responseContainer = document.getElementById('response-container');
+                responseContainer.innerHTML = `
+                    <h2>Previous Question:</h2>
+                    <p>${this.innerText}</p>
+                    <h2>ChatGPT's Response:</h2>
+                    <p>${this.getAttribute('data-response')}</p>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>
